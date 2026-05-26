@@ -1,0 +1,314 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Taxi RL Dashboard — Q-Learning Agent</title>
+  <meta name="description"
+    content="Interactive dashboard for a Q-Learning Reinforcement Learning agent trained on the Taxi-v3 Gymnasium environment. Visualize learning curves, evaluation metrics, Q-table exploration, and episode replays." />
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet" />
+  <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+  <link rel="stylesheet" href="style.css" />
+</head>
+<body>
+
+<!-- ═══════════════════════════════════════════ HEADER ════ -->
+<header class="header" id="header">
+  <div class="header-inner">
+    <div class="logo">
+      <span class="logo-icon">🚕</span>
+      <div class="logo-text">
+        <span class="logo-title">Taxi RL</span>
+        <span class="logo-subtitle">Q-Learning Dashboard</span>
+      </div>
+    </div>
+    <nav class="nav">
+      <a href="#overview"    class="nav-link active" data-section="overview">Overview</a>
+      <a href="#training"    class="nav-link" data-section="training">Training</a>
+      <a href="#evaluation"  class="nav-link" data-section="evaluation">Evaluation</a>
+      <a href="#qtable"      class="nav-link" data-section="qtable">Q-Table</a>
+      <a href="#replay"      class="nav-link" data-section="replay">Replay</a>
+    </nav>
+    <div class="header-badge" id="status-badge">
+      <span class="badge-dot"></span>
+      <span id="status-text">Loading…</span>
+    </div>
+  </div>
+</header>
+
+<!-- ═══════════════════════════════════════════ HERO ════ -->
+<section class="hero" id="overview">
+  <div class="hero-bg"></div>
+  <div class="container">
+    <h1 class="hero-title">
+      Taxi Route Optimization<br />
+      <span class="gradient-text">with Reinforcement Learning</span>
+    </h1>
+    <p class="hero-subtitle">
+      A tabular Q-Learning agent that masters pickup &amp; drop-off routing
+      in the Gymnasium Taxi-v3 environment through iterative Bellman updates.
+    </p>
+
+    <!-- Metric cards -->
+    <div class="metric-grid" id="metric-grid">
+      <div class="metric-card" id="mc-avg-reward">
+        <div class="metric-icon">🏆</div>
+        <div class="metric-value" id="val-avg-reward">—</div>
+        <div class="metric-label">Avg Reward</div>
+        <div class="metric-sub">(evaluation)</div>
+      </div>
+      <div class="metric-card" id="mc-success">
+        <div class="metric-icon">✅</div>
+        <div class="metric-value" id="val-success">—</div>
+        <div class="metric-label">Success Rate</div>
+        <div class="metric-sub">(test episodes)</div>
+      </div>
+      <div class="metric-card" id="mc-steps">
+        <div class="metric-icon">👣</div>
+        <div class="metric-value" id="val-steps">—</div>
+        <div class="metric-label">Avg Steps</div>
+        <div class="metric-sub">(to complete)</div>
+      </div>
+      <div class="metric-card" id="mc-episodes">
+        <div class="metric-icon">🔄</div>
+        <div class="metric-value" id="val-episodes">—</div>
+        <div class="metric-label">Episodes Trained</div>
+        <div class="metric-sub"></div>
+      </div>
+      <div class="metric-card" id="mc-time">
+        <div class="metric-icon">⏱</div>
+        <div class="metric-value" id="val-time">—</div>
+        <div class="metric-label">Train Time</div>
+        <div class="metric-sub"></div>
+      </div>
+      <div class="metric-card" id="mc-epsilon">
+        <div class="metric-icon">🎲</div>
+        <div class="metric-value" id="val-epsilon">—</div>
+        <div class="metric-label">Final Epsilon</div>
+        <div class="metric-sub">(exploration)</div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ═══════════════════════════════════════════ HOW IT WORKS ════ -->
+<section class="section" id="how-it-works">
+  <div class="container">
+    <h2 class="section-title">How It Works</h2>
+    <div class="algo-grid">
+      <div class="algo-card">
+        <div class="algo-num">01</div>
+        <h3>State Space</h3>
+        <p>500 discrete states encoding the taxi position (5×5 grid),
+          passenger location (4 spots + in-taxi), and destination (4 spots).</p>
+        <code class="algo-code">s = row×100 + col×20 + pass×4 + dest</code>
+      </div>
+      <div class="algo-card">
+        <div class="algo-num">02</div>
+        <h3>Q-Table Update</h3>
+        <p>Bellman equation iteratively refines state-action values
+          balancing immediate and future rewards.</p>
+        <code class="algo-code">Q(s,a) ← Q(s,a) + α[r + γ·max Q(s',a') − Q(s,a)]</code>
+      </div>
+      <div class="algo-card">
+        <div class="algo-num">03</div>
+        <h3>ε-Greedy Policy</h3>
+        <p>Balances exploration (random actions) with exploitation
+          (greedy Q-table lookup). Epsilon decays exponentially.</p>
+        <code class="algo-code">ε ← max(ε_min, ε × ε_decay)</code>
+      </div>
+      <div class="algo-card">
+        <div class="algo-num">04</div>
+        <h3>Rewards</h3>
+        <p>Sparse reward signal: +20 for successful dropoff,
+          −10 for illegal pickup/dropoff, −1 per step (time pressure).</p>
+        <code class="algo-code">r ∈ {+20, −10, −1}</code>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ═══════════════════════════════════════════ HYPERPARAMETERS ════ -->
+<section class="section" id="training">
+  <div class="container">
+    <h2 class="section-title">Hyperparameters</h2>
+    <div class="hp-grid" id="hp-grid">
+      <!-- Populated by JS -->
+      <div class="hp-skeleton"></div>
+      <div class="hp-skeleton"></div>
+      <div class="hp-skeleton"></div>
+      <div class="hp-skeleton"></div>
+      <div class="hp-skeleton"></div>
+      <div class="hp-skeleton"></div>
+    </div>
+  </div>
+</section>
+
+<!-- ═══════════════════════════════════════════ CHARTS ════ -->
+<section class="section">
+  <div class="container">
+    <h2 class="section-title">Learning Curves</h2>
+    <div class="charts-grid">
+      <!-- Reward chart -->
+      <div class="chart-card">
+        <div class="chart-header">
+          <h3>📈 Reward per Episode</h3>
+          <div class="chart-controls">
+            <label for="window-slider">Window: <span id="window-val">100</span></label>
+            <input type="range" id="window-slider" min="10" max="300" value="100" step="10" />
+          </div>
+        </div>
+        <div class="chart-wrapper">
+          <canvas id="reward-chart"></canvas>
+        </div>
+      </div>
+      <!-- Steps chart -->
+      <div class="chart-card">
+        <div class="chart-header">
+          <h3>👣 Steps to Completion</h3>
+        </div>
+        <div class="chart-wrapper">
+          <canvas id="steps-chart"></canvas>
+        </div>
+      </div>
+      <!-- Epsilon chart -->
+      <div class="chart-card half">
+        <div class="chart-header">
+          <h3>📉 Epsilon Decay</h3>
+        </div>
+        <div class="chart-wrapper">
+          <canvas id="epsilon-chart"></canvas>
+        </div>
+      </div>
+      <!-- Eval reward dist -->
+      <div class="chart-card half">
+        <div class="chart-header">
+          <h3>🏆 Eval Reward Distribution</h3>
+        </div>
+        <div class="chart-wrapper">
+          <canvas id="eval-dist-chart"></canvas>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ═══════════════════════════════════════════ EVALUATION ════ -->
+<section class="section" id="evaluation">
+  <div class="container">
+    <h2 class="section-title">Evaluation Results</h2>
+    <div class="eval-grid">
+      <div class="eval-table-wrap">
+        <table class="eval-table" id="eval-table">
+          <thead>
+            <tr>
+              <th>#</th>
+              <th>Total Reward</th>
+              <th>Steps</th>
+              <th>Success</th>
+            </tr>
+          </thead>
+          <tbody id="eval-tbody">
+            <tr><td colspan="4" class="loading-cell">Loading…</td></tr>
+          </tbody>
+        </table>
+      </div>
+      <div class="eval-stats" id="eval-stats">
+        <!-- Populated by JS -->
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ═══════════════════════════════════════════ Q-TABLE EXPLORER ════ -->
+<section class="section" id="qtable">
+  <div class="container">
+    <h2 class="section-title">Q-Table State Explorer</h2>
+    <p class="section-sub">
+      Decode any of the 500 Taxi-v3 states and inspect the Q-values for each action.
+    </p>
+    <div class="explorer-grid">
+      <div class="explorer-controls">
+        <div class="input-group">
+          <label for="state-input">State ID (0–499)</label>
+          <div class="input-row">
+            <input type="number" id="state-input" min="0" max="499" value="328" />
+            <button class="btn btn-primary" id="decode-btn">Decode →</button>
+          </div>
+          <input type="range" id="state-slider" min="0" max="499" value="328" />
+        </div>
+        <div class="decoded-state" id="decoded-state">
+          <div class="decode-row"><span class="decode-key">Row</span><span class="decode-val" id="d-row">—</span></div>
+          <div class="decode-row"><span class="decode-key">Col</span><span class="decode-val" id="d-col">—</span></div>
+          <div class="decode-row"><span class="decode-key">Passenger</span><span class="decode-val" id="d-pass">—</span></div>
+          <div class="decode-row"><span class="decode-key">Destination</span><span class="decode-val" id="d-dest">—</span></div>
+          <div class="decode-row highlight"><span class="decode-key">Best Action</span><span class="decode-val" id="d-best">—</span></div>
+        </div>
+      </div>
+      <div class="q-bars-wrap">
+        <div class="q-bars" id="q-bars">
+          <!-- Populated by JS -->
+        </div>
+      </div>
+      <div class="taxi-grid-wrap">
+        <div class="taxi-grid" id="taxi-grid">
+          <!-- 5×5 Taxi grid rendered by JS -->
+        </div>
+        <div class="taxi-legend">
+          <span class="legend-item"><span class="legend-dot taxi"></span> Taxi</span>
+          <span class="legend-item"><span class="legend-dot passenger"></span> Passenger</span>
+          <span class="legend-item"><span class="legend-dot destination"></span> Destination</span>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ═══════════════════════════════════════════ EPISODE REPLAY ════ -->
+<section class="section" id="replay">
+  <div class="container">
+    <h2 class="section-title">Episode Replay</h2>
+    <p class="section-sub">Step through a test episode and watch the agent navigate the grid.</p>
+    <div class="replay-grid">
+      <div class="replay-controls">
+        <select id="replay-episode-select" class="ep-select">
+          <option value="">Select episode…</option>
+        </select>
+        <div class="replay-buttons">
+          <button class="btn btn-secondary" id="replay-prev" disabled>◀ Prev</button>
+          <button class="btn btn-primary"   id="replay-play" disabled>▶ Play</button>
+          <button class="btn btn-secondary" id="replay-next" disabled>Next ▶</button>
+        </div>
+        <div class="replay-progress">
+          <div id="replay-step-label">Step: —</div>
+          <div id="replay-reward-label">Cumulative Reward: —</div>
+          <div id="replay-action-label">Action: —</div>
+        </div>
+      </div>
+      <div class="replay-main">
+        <div class="taxi-grid large" id="replay-grid"></div>
+      </div>
+      <div class="replay-log" id="replay-log">
+        <div class="log-header">Step Log</div>
+        <div class="log-body" id="log-body"></div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ═══════════════════════════════════════════ FOOTER ════ -->
+<footer class="footer">
+  <div class="container">
+    <p>Built with <strong>Q-Learning</strong> · Gymnasium Taxi-v3 · Chart.js</p>
+    <p class="footer-sub">
+      Run <code>python train_and_export.py</code> to regenerate data,
+      then refresh this page.
+    </p>
+  </div>
+</footer>
+
+<script src="app.js"></script>
+</body>
+</html>
